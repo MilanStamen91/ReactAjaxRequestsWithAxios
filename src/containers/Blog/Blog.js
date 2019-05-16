@@ -1,68 +1,57 @@
 import React, { Component } from 'react';
 // import axios from 'axios';
-import axios from '../../axios'; // adding from axios.js - const instance config
+import { Route, NavLink, Switch } from 'react-router-dom';
+// Redirect
 
-import Post from '../../components/Post/Post';
-import FullPost from '../../components/FullPost/FullPost';
-import NewPost from '../../components/NewPost/NewPost';
 import './Blog.css';
+import Posts from './Posts/Posts';
+import asyncComponent from '../../hoc/asyncComponent';
+// import NewPost from './NewPost/NewPost';
+
+//Only imported once this function() is executed
+const AsyncNewPost = asyncComponent(() => {
+    return import('./NewPost/NewPost');
+});
 
 class Blog extends Component {
     state = {
-        posts: [],
-        selectedPostId: null,
-        error: false
+        auth: true
     }
 
-    //GET request for Posts
-    componentDidMount() {
-        axios.get('/posts')
-        .then(response => {
-            const posts = response.data.slice(0, 6);
-            const updatedPosts = posts.map(post => {
-                return {
-                    ...post,
-                    author: 'Milan'
-                }
-            });
-            this.setState({posts: updatedPosts});
-            // console.log(response);
-        })
-        .catch(error => {
-            this.setState({error: true});
-        });
-    }
-
-    //Get id for selected post
-    postSelectedHandler = (id) => {
-        this.setState({selectedPostId: id});
-    }
-
-    //[Handling Error Locally] in posts from catch which targets state
     render () {
-        let posts = <p style={{textAlign: 'center', color: 'red'}}><strong>Something went wrong!</strong></p>;
-        if (!this.state.error) {
-            posts = this.state.posts.map((post) => {
-                return <Post 
-                key={post.id} 
-                title={post.title} 
-                author={post.author}
-                clicked={()=> this.postSelectedHandler(post.id)}
-                />
-            });
-        }       
-        
         return (
-            <div>
-                <section className="Posts">
-                   {posts}
-                </section>
-                <section>
-                    <FullPost id={this.state.selectedPostId}/>
-                </section>
-                <section>
-                    <NewPost />
-                </section>
+            <div className="Blog">
+                <header>
+                    <nav>
+                        <ul>
+                            <li><NavLink 
+                            to="/posts/"
+                            exact
+                            activeClassName="my-active"
+                            activeStyle={{
+                                color: '#fa923f',
+                                textDecoration: 'underline'
+                            }}>Posts</NavLink></li> {/* Style Active links and adding active class */}
+                            <li><NavLink to={{
+                                //pathname: this.props.match,url + '/new-post', // Building a relative path
+                                pathname: '/new-post',
+                                hash: '#submit',
+                                search: '?quick-submit=true'
+                            }}>New Post</NavLink></li>
+                        </ul>
+                    </nav>
+                </header>
+                {/* <Route path="/" exact render={() => <h1>Home</h1>} />
+                <Route path="/" render={() => <h1>Home 2</h1>} /> */}
+                <Switch>  
+                    {/* This is guard */}
+                    { this.state.auth ? <Route path="/new-post" component={AsyncNewPost} /> : null}
+                    <Route path="/posts" component={Posts} />
+                    <Route render={()=> <h1>Not Found Error 404</h1>}/>  {/* 404 it wont work together with Redirect */}
+                    {/* <Redirect from="/" to="/posts" /> */}
+                    {/* <Route path="/" component={Posts} /> */}
+                </Switch>
+                
             </div>
         );
     }
